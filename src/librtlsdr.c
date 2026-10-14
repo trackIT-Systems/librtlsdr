@@ -1662,7 +1662,7 @@ const int * get_tuner_gains(rtlsdr_dev_t *dev, int *pNum )
 	static const int r82xx_gains[] = { 0, 9, 14, 27, 37, 77, 87, 125, 144, 157,
 								166, 197, 207, 229, 254, 280, 297, 328,
 						 		338, 364, 372, 386, 402, 421, 434, 439,
-						 		445, 480, 496 };
+						 		445, 480, 483, 496 };
 	static const int unknown_gains[] = { 0 /* no gain values */ };
 
 	const int *ptr = NULL;
