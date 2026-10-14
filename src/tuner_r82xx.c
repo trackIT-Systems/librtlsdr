@@ -22,6 +22,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <errno.h>
 #include <stdio.h>
 #include <stdint.h>
 #include <string.h>
@@ -1041,6 +1042,59 @@ int r82xx_set_gain(struct r82xx_priv *priv, int set_manual_gain, int gain)
 		if (rc < 0)
 			return rc;
 	}
+
+	return 0;
+}
+
+/*
+ * Set LNA, mixer and VGA gain stage individually, as indices 0 .. 15 into
+ * r82xx_lna_gain_steps[], r82xx_mixer_gain_steps[] and r82xx_vga_gain_steps[].
+ * The combined LNA + mixer gain (tenth dB) is returned in rf_gain, if not NULL.
+ */
+int r82xx_set_gain_ext(struct r82xx_priv *priv, int lna_index, int mixer_index,
+		       int vga_index, int *rf_gain)
+{
+	int i, rc, gain = 0;
+	uint8_t data[4];
+
+	if (lna_index < 0 || lna_index > 15 ||
+	    mixer_index < 0 || mixer_index > 15 ||
+	    vga_index < 0 || vga_index > 15)
+		return -EINVAL;
+
+	/* LNA auto off */
+	rc = r82xx_write_reg_mask(priv, 0x05, 0x10, 0x10);
+	if (rc < 0)
+		return rc;
+
+	/* Mixer auto off */
+	rc = r82xx_write_reg_mask(priv, 0x07, 0, 0x10);
+	if (rc < 0)
+		return rc;
+
+	rc = r82xx_read(priv, 0x00, data, sizeof(data));
+	if (rc < 0)
+		return rc;
+
+	rc = r82xx_write_reg_mask(priv, 0x05, lna_index, 0x0f);
+	if (rc < 0)
+		return rc;
+
+	rc = r82xx_write_reg_mask(priv, 0x07, mixer_index, 0x0f);
+	if (rc < 0)
+		return rc;
+
+	/* VGA gain, and VGA gain control by the RTL2832 off */
+	rc = r82xx_write_reg_mask(priv, 0x0c, vga_index, 0x9f);
+	if (rc < 0)
+		return rc;
+
+	for (i = 0; i <= lna_index; i++)
+		gain += r82xx_lna_gain_steps[i];
+	for (i = 0; i <= mixer_index; i++)
+		gain += r82xx_mixer_gain_steps[i];
+	if (rf_gain)
+		*rf_gain = gain;
 
 	return 0;
 }

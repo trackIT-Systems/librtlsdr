@@ -225,6 +225,20 @@ RTLSDR_API int rtlsdr_set_tuner_gain(rtlsdr_dev_t *dev, int gain);
 RTLSDR_API int rtlsdr_set_tuner_bandwidth(rtlsdr_dev_t *dev, uint32_t bw);
 
 /*!
+ * Set the LNA, mixer and VGA gain stages of an R820T/R828D tuner individually.
+ * Switches the tuner to manual gain and, unlike rtlsdr_set_tuner_gain(), also
+ * sets the VGA gain, which is otherwise fixed.
+ *
+ * \param dev the device handle given by rtlsdr_open()
+ * \param lna_gain index in 0 .. 15: 0 == min; see tuner_r82xx.c table r82xx_lna_gain_steps[]
+ * \param mixer_gain index in 0 .. 15: 0 == min; see tuner_r82xx.c table r82xx_mixer_gain_steps[]
+ * \param vga_gain index in 0 .. 15: 0 == -12 dB; 15 == 40.5 dB; 3.5 dB/step
+ * \return 0 on success, -1 if the tuner is not an R820T/R828D, <0 on error
+ *     (e.g. an index out of range)
+ */
+RTLSDR_API int rtlsdr_set_tuner_gain_ext(rtlsdr_dev_t *dev, int lna_gain, int mixer_gain, int vga_gain);
+
+/*!
  * Get actual gain the device is configured to.
  *
  * \param dev the device handle given by rtlsdr_open()

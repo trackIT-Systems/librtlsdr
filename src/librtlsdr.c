@@ -1046,6 +1046,25 @@ int rtlsdr_set_tuner_gain(rtlsdr_dev_t *dev, int gain)
 	return r;
 }
 
+int rtlsdr_set_tuner_gain_ext(rtlsdr_dev_t *dev, int lna_gain, int mixer_gain, int vga_gain)
+{
+	int r, rf_gain = 0;
+
+	if (!dev || !dev->tuner ||
+	    (dev->tuner_type != RTLSDR_TUNER_R820T &&
+	     dev->tuner_type != RTLSDR_TUNER_R828D))
+		return -1;
+
+	rtlsdr_set_i2c_repeater(dev, 1);
+	r = r82xx_set_gain_ext(&dev->r82xx_p, lna_gain, mixer_gain, vga_gain, &rf_gain);
+	rtlsdr_set_i2c_repeater(dev, 0);
+
+	/* like rtlsdr_set_tuner_gain(): remember what was set */
+	dev->gain = r ? 0 : rf_gain;
+
+	return r;
+}
+
 int rtlsdr_get_tuner_gain(rtlsdr_dev_t *dev)
 {
 	if (!dev)
