@@ -1,9 +1,9 @@
 Source: rtl-sdr
 Section: comm
 Priority: optional
-Maintainer: A. Maitland Bottoms <bottoms@debian.org>
+Maintainer: Jonas Höchst <hoechst@trackit.systems>
 Build-Depends: cmake,
-               debhelper (>= 9.0.0~),
+               debhelper-compat (= 13),
                libusb-1.0-0-dev [linux-any],
                libusb-dev [hurd-i386],
                libusb2-dev [kfreebsd-any]

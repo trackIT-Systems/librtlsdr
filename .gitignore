@@ -54,3 +54,4 @@ src/rtl_test
 debianize/*.deb
 .cproject
 .project
+dist/

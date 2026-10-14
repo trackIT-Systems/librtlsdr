@@ -5,8 +5,16 @@ export DEB_HOST_MULTIARCH
 %:
 	dh $@
 
+# cmake build; the autotools files are legacy and must not be autoreconf'ed
+override_dh_autoreconf:
+
 override_dh_auto_configure: debian/librtlsdr0.udev
-	dh_auto_configure -- -DLIB_INSTALL_DIR=lib/$(DEB_HOST_MULTIARCH) -DDETACH_KERNEL_DRIVER=ON
+	dh_auto_configure -- -DLIB_INSTALL_DIR=lib/$(DEB_HOST_MULTIARCH)
 
 debian/librtlsdr0.udev: rtl-sdr.rules
 	cp -p rtl-sdr.rules debian/librtlsdr0.udev
+
+override_dh_strip:
+	dh_strip --no-automatic-dbgsym
+
+override_dh_dwz:

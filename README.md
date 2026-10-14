@@ -111,3 +111,29 @@ Pull requests are always welcome but please make changes to, and pull request fr
     * `git merge upstream/development`
 - push your commit/s to your forked repo
 - do a pull request via GitHub
+
+# Debian packages (Raspberry Pi OS)
+
+This fork builds `librtlsdr0`, `librtlsdr-dev` and `rtl-sdr` as `.deb` files
+using the packaging in `debian/`. The build runs in a `debian:trixie`
+container, so Docker is the only requirement, on macOS, Linux and in CI:
+
+```
+scripts/build-deb.sh          # packages end up in ./dist
+```
+
+`DEB_IMAGE` (default `debian:trixie`), `DEB_PLATFORM` (e.g. `linux/arm64`) and
+`OUT` can be set to change the target. The version is derived from `git describe`
+(`v0.9.0` -> `0.9.0`, later commits -> `0.9.0+gitN.<hash>`, uncommitted changes add `+dirty`).
+
+GitHub Actions (`.github/workflows/deb.yml`) runs the same script on an arm64
+runner for every push and pull request; pushing a `v*` tag attaches the packages to the release.
+
+## Quick local build for testing (no package)
+
+```
+cmake -S . -B build && cmake --build build
+build/src/rtl_test -t
+```
+
+(needs libusb: `brew install libusb` or `apt install libusb-1.0-0-dev`)
