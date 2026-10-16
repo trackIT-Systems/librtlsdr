@@ -8,9 +8,9 @@ Build-Depends: cmake,
                libusb-dev [hurd-i386],
                libusb2-dev [kfreebsd-any]
 Standards-Version: 4.1.4
-Homepage: http://sdr.osmocom.org/trac/wiki/rtl-sdr
-Vcs-Browser: https://salsa.debian.org/bottoms/pkg-rtl-sdr
-Vcs-Git: https://salsa.debian.org/bottoms/pkg-rtl-sdr.git
+Homepage: https://github.com/trackIT-Systems/librtlsdr
+Vcs-Browser: https://github.com/trackIT-Systems/librtlsdr
+Vcs-Git: https://github.com/trackIT-Systems/librtlsdr.git
 
 Package: librtlsdr-dev
 Section: libdevel

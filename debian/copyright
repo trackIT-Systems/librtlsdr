@@ -1,13 +1,14 @@
 Format: https://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
 Upstream-Name: rtl-sdr
-Upstream-Contact: http://sdr.osmocom.org/trac/wiki/rtl-sdr
-Source:
- git clone git://git.osmocom.org/rtl-sdr.git
- The upstream package source tarball was generated from the tag:
- git archive --format=tar --prefix=rtl-sdr-0.5.2.7.3ab6/ 3ab6ff | gzip > ../rtl-sdr_0.5.2.7.3ab6.orig.tar.gz
+Upstream-Contact: https://github.com/trackIT-Systems/librtlsdr
+Source: https://github.com/trackIT-Systems/librtlsdr
+ This is the trackIT Systems fork of https://github.com/librtlsdr/librtlsdr,
+ which is a fork of https://github.com/steve-m/librtlsdr (originally
+ git://git.osmocom.org/rtl-sdr.git). The package is built from the git
+ repository, there is no separate upstream tarball.
 Comment:
- Debian packages sponsored by A. Maitland Bottoms,
- based upon packaging work by Adam Cécile.
+ The Debian packaging is based upon the packaging by A. Maitland Bottoms,
+ which in turn is based upon packaging work by Adam Cécile.
  .
  Upstream Authors:
  Steve Markgraf <steve@steve-m.de>
