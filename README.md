@@ -1,10 +1,21 @@
-[![librtlsdr version](https://img.shields.io/github/tag/librtlsdr/librtlsdr.svg?style=flat&label=librtlsdr)](https://github.com/librtlsdr/librtlsdr/releases)
-[![GPLv2 License](http://img.shields.io/badge/license-GPLv2-brightgreen.svg)](https://tldrlegal.com/license/gnu-general-public-license-v2)
+# librtlsdr (trackIT Systems fork): RTL2832U SDR driver and tools with Debian packages for Raspberry Pi OS
+
+[![Latest release](https://img.shields.io/github/v/release/trackIT-Systems/librtlsdr?label=release)](https://github.com/trackIT-Systems/librtlsdr/releases)
+[![Debian packages](https://github.com/trackIT-Systems/librtlsdr/actions/workflows/deb.yml/badge.svg)](https://github.com/trackIT-Systems/librtlsdr/actions/workflows/deb.yml)
+[![GPLv2 License](https://img.shields.io/badge/license-GPLv2-brightgreen.svg)](https://tldrlegal.com/license/gnu-general-public-license-v2)
+
+rtl-sdr turns your Realtek RTL2832 based DVB dongle into a SDR receiver. This repository contains the driver library
+`librtlsdr` and command line tools (`rtl_test`, `rtl_sdr`, `rtl_fm`, `rtl_tcp`, `rtl_power`, ...).
+
+This is the librtlsdr used by [tsOS-vhf](https://github.com/trackIT-Systems/tsOS-vhf). It adds individual gain stage
+control for R820T/R828D tuners, an extended tuner bandwidth handling and more compared to the original osmocom/steve-m
+sources, see [README_improvements.md](README_improvements.md) for the list of improvements,
+[README.rtlfm_cmdfile](README.rtlfm_cmdfile) for scanning with `rtl_fm` and [README.rtlsdr_rpc](README.rtlsdr_rpc)
+for using a dongle from a remote host.
 
 # trackIT Systems fork
 
-This is the librtlsdr used by [tsOS-vhf](https://github.com/trackIT-Systems/tsOS-vhf).
-It continues the community fork [librtlsdr/librtlsdr](https://github.com/librtlsdr/librtlsdr)
+This fork continues the community fork [librtlsdr/librtlsdr](https://github.com/librtlsdr/librtlsdr)
 (v0.9.0, last commit 2024-03-22; that fork itself is a hard fork of
 [steve-m/librtlsdr](https://github.com/steve-m/librtlsdr) and appears to be inactive), because
 our software depends on its additions, e.g. `rtlsdr_set_tuner_gain_ext()` for the individual
@@ -50,17 +61,34 @@ git cherry-pick -x <commit>
 ```
 
 The branch `community-fork` is the unmodified state of the community fork this fork started from.
+The branch `upstream-based` holds an earlier experiment with this fork based on steve-m 2.0.3 (not maintained).
 
-# Description
+# Install on Raspberry Pi OS / Debian (arm64)
 
-rtl-sdr turns your Realtek RTL2832 based DVB dongle into a SDR receiver
+Packages are built for Debian 13 (trixie), which Raspberry Pi OS is based on. Download the `.deb` files
+from the [latest release](https://github.com/trackIT-Systems/librtlsdr/releases/latest) and install them:
 
+```
+sudo apt install ./librtlsdr0_*.deb ./rtl-sdr_*.deb              # library and tools
+sudo apt install ./librtlsdr-dev_*.deb                           # additionally, for development
+```
 
-# New enhancements and features in this version
+- `librtlsdr0` contains the library and the udev rules (`/usr/lib/udev/rules.d/60-librtlsdr0.rules`),
+  `rtl-sdr` the command line tools, `librtlsdr-dev` headers, static library and pkg-config file.
+- `rtl-sdr` and `librtlsdr-dev` replace the packages of the same name from Debian (2.0.x). The library has the
+  soname `librtlsdr.so.0` and therefore does not clash with Debian's `librtlsdr2`. Debian's version numbers
+  are higher, so hold our packages if the system has access to the Debian repositories:
+  `sudo apt-mark hold librtlsdr0 rtl-sdr librtlsdr-dev`.
+- If the kernel DVB driver claims the dongle (`rtl_test` reports `usb_claim_interface error -6`), blacklist it,
+  see [Setup for SDR only use](#setup-for-sdr-only-use---without-dvb-compatibility) below.
 
-Many different developments have been taken in this release. For an overview, see [improvements](README_improvements.md)
+Check the installation with a dongle plugged in:
 
-# Build / Install (on debian/ubuntu)
+```
+rtl_test -t
+```
+
+# Build from source
 
 ## prerequisites
 development tools have to be installed:
@@ -68,29 +96,19 @@ development tools have to be installed:
 sudo apt-get install build-essential cmake git
 ```
 
-install the libusb-1.0 development package::
+install the libusb-1.0 development package:
 ```
-sudo apt-get install libusb-dev libusb-1.0-0-dev
-```
-
-## retrieve the sources - right branch
-
-```
-git clone https://github.com/librtlsdr/librtlsdr.git
+sudo apt-get install libusb-1.0-0-dev
 ```
 
-in case you want the *development* branch, e.g. for testing or preparing patches:
+## retrieve the sources
+
 ```
+git clone https://github.com/trackIT-Systems/librtlsdr.git
 cd librtlsdr
-git checkout development
 ```
 
-by default, you should have the *master* branch, in doubt:
-```
-cd librtlsdr
-git status
-git checkout master
-```
+The *master* branch is the maintained one. Releases are tags `vX.Y.Z`.
 
 ## build
 run cmake and start compilation. cmake will accept some options, e.g.
@@ -116,10 +134,37 @@ sudo make install
 sudo ldconfig
 ```
 
-# Development builds / binaries
+## quick local build for testing (no install, no package)
 
-[GitHub Actions](https://github.com/librtlsdr/librtlsdr/actions) is used for development builds - for Linux (x86), MacOS and Windows x86 32/64.
-Cross-builds for Windows from a Linux machine: see [cross_build_mingw32.sh](cross_build_mingw32.sh) or [cross_build_mingw64.sh](cross_build_mingw64.sh)
+```
+cmake -S . -B build && cmake --build build
+build/src/rtl_test -t
+```
+
+(needs libusb: `brew install libusb` or `apt install libusb-1.0-0-dev`)
+
+# Build the Debian packages
+
+The packages are built with the packaging in `debian/` inside a `debian:trixie` container, so Docker is the
+only requirement, on macOS, Linux and in CI:
+
+```
+scripts/build-deb.sh          # packages end up in ./dist
+```
+
+`DEB_IMAGE` (default `debian:trixie`), `DEB_PLATFORM` (e.g. `linux/arm64`) and `OUT` can be set to change the
+target. The package version is derived from `git describe`: tag `v0.9.1` -> `0.9.1`, later commits ->
+`0.9.1+gitN.<hash>`, uncommitted changes add `+dirty`.
+
+# Continuous integration and releases
+
+[GitHub Actions](https://github.com/trackIT-Systems/librtlsdr/actions) (`.github/workflows/deb.yml`) runs
+`scripts/build-deb.sh` on an arm64 runner for every push and pull request and uploads the packages as an artifact.
+Pushing a tag `vX.Y.Z` additionally creates a GitHub release with the `.deb` files attached.
+
+Only the Debian packages are built and tested. The scripts for cross-building for Windows
+([cross_build_mingw32.sh](cross_build_mingw32.sh), [cross_build_mingw64.sh](cross_build_mingw64.sh)) and the
+macOS/Windows build files are inherited from the community fork and are not tested by us.
 
 # For more information see:
 
@@ -141,49 +186,9 @@ https://osmocom.org/projects/rtl-sdr/wiki/Rtl-sdr
 
 # Contributing
 
-Pull requests are always welcome but please make changes to, and pull request from, the development branch.
+Pull requests are welcome, please open them against `master`.
 
-## Initial setup:
-
-- fork the librtlsdr repo via GitHub
-- clone your fork locally and cd to the cloned repo's folder
-- add the upstream development repo:
-    * `git remote add upstream git@github.com:librtlsdr/librtlsdr.git`
-- track the development branch: 
-    * `git branch --track development origin/development`
-
-## Normal workflow:
-
-- checkout the development branch and make your changes
-- commit your changes
-- sync your local development branch with the upstream development branch:
-    * `git fetch upstream`
-    * `git merge upstream/development`
-- push your commit/s to your forked repo
-- do a pull request via GitHub
-
-# Debian packages (Raspberry Pi OS)
-
-This fork builds `librtlsdr0`, `librtlsdr-dev` and `rtl-sdr` as `.deb` files
-using the packaging in `debian/`. The build runs in a `debian:trixie`
-container, so Docker is the only requirement, on macOS, Linux and in CI:
-
-```
-scripts/build-deb.sh          # packages end up in ./dist
-```
-
-`DEB_IMAGE` (default `debian:trixie`), `DEB_PLATFORM` (e.g. `linux/arm64`) and
-`OUT` can be set to change the target. The version is derived from `git describe`
-(tag `v0.9.1` -> `0.9.1`, later commits -> `0.9.1+gitN.<hash>`, uncommitted changes add `+dirty`).
-
-GitHub Actions (`.github/workflows/deb.yml`) runs the same script on an arm64
-runner for every push and pull request; pushing a `v*` tag attaches the packages to the release.
-
-## Quick local build for testing (no package)
-
-```
-cmake -S . -B build && cmake --build build
-build/src/rtl_test -t
-```
-
-(needs libusb: `brew install libusb` or `apt install libusb-1.0-0-dev`)
+- Changes that originate from steve-m/librtlsdr or the community fork are ported with `git cherry-pick -x <commit>`
+  (see [Reviewing upstream changes](#reviewing-upstream-changes)); add new reviewed-but-skipped commits to the table above.
+- Check a change locally with `scripts/build-deb.sh`; CI runs the same script.
+- A release is a tag `vX.Y.Z` on `master`; CI builds the packages and attaches them to the release.
